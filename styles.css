@@ -1,0 +1,45 @@
+.center{
+    text-align: center;
+}
+
+html{
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    background-color:black;
+    color:white;
+    overflow-x: hidden; /* no horizontal scroll */
+    text-wrap: balance;
+}
+h1{
+    font-size:5em;
+}
+.coindir{
+    font-size:3em;
+}
+
+.flipbutton{
+    color:white;
+    background-color:#500050;
+    font-size:8em;
+    border-color: purple;
+    border-width: 10px;
+    border-radius:50px;
+}
+
+.parent {
+display: grid;
+grid-template-columns: repeat(5, 1fr);
+grid-template-rows: repeat(5, 1fr);
+}
+
+.div1 { grid-area: 1 / 1 / 6 / 2; transition: all 0.75s ease-in-out; transform: translateX(calc(-16.666%*6)) }
+.div2 { grid-area: 1 / 1 / 6 / 6; transition: all 0.75s ease-in-out; }
+.div2.opened {  transform: translateX(16.666%) }
+.div1.opened {  transform: translateX(0) }
+
+.sidebararrow {
+    cursor: pointer;
+    transition: all 0.75s ease-in-out;
+}
+.sidebararrow.opened {
+    transform: translateX(2020%)
+}
