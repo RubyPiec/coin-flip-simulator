@@ -8,33 +8,70 @@ let sideCount = 0
 let recentFlips = []
 let recentflipcount;
 
+let graphOn = false;
+
 let customsides = ["Heads", "Tails", "Side", "4", "5", "6", "7", "8", "9", "10"]
-let sideweights = [4999, 4999, 1, 1, 1, 1, 1, 1, 1, 1]
+let sideweights = [4999, 4999, 2, 1, 1, 1, 1, 1, 1, 1]
 let totalweight = 0;
 
 function cpl(count){ //check plural
     return count == 1 ? '' : 's'
 }
 
+const ctx = document.getElementById('graph');
+let chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        datasets: [{
+            label: "Heads %",
+            data: []
+        },
+        {
+            label: "Tails %",
+            data: []
+        }]
+    },
+    options: {
+		scales: {
+			x: {
+				type: 'linear',
+				position: 'bottom'
+			}
+		},
+        responsive: false
+	}
+});
+
+
 function flip(){
-    updatechances()
-    if(recentflipcount>1000000){
+    recentflipcount = Number(document.getElementById("flipamount").value)
+    if(graphOn && recentflipcount>10000){
         if(!confirm("The amount of coins you'd like to flip is looking awfully high, and may be very laggy... are you sure you still want to do this?")){
             return;
         }
+    } else{
+        if(recentflipcount > 1000000){
+            if(!confirm("The amount of coins you'd like to flip is looking awfully high, and may be very laggy... are you sure you still want to do this?")){
+                return;
+            }
+        }
     }
-    recentflipcount = Number(document.getElementById("flipamount").value)
     recentFlips = []
     for(i=1;i<=recentflipcount;i++){
-        flips++
         randnum = Math.random()
         if(document.getElementById("ideal").checked){
+            flips++
             idealFlip()
         } else if(document.getElementById("realistic").checked){
+            flips++
             realisticFlip()
         } else{
+            //I'm not counting custom flips towards the total because uhh yeah i dont feel like it ig
             customFlip()
         }
+    }
+    if(graphOn){
+        chart.update();
     }
     update()
 }
@@ -88,16 +125,32 @@ function update(){
         document.getElementById("customsettings").classList.remove("custom")
         totalweight=0
 
-        for(i=0;i<Number(document.getElementById("csides").value);i++){
-            sideweights[i]=Number(document.getElementById("weight"+i).value)
-            totalweight+=sideweights[i]
+        for(k=0;k<Number(document.getElementById("csides").value);k++){
+            sideweights[k]=Number(document.getElementById("weight"+k).value)
+            totalweight+=sideweights[k]
+        }
+        if(recentFlips.length>0){
+            let grouped = Object.groupBy(recentFlips, x => x)
+            let counts = Object.fromEntries(Object.entries(grouped).map(([key, values]) => [key, values.length]))
+            console.log(counts)
+            let newstr = "Your 'coin' landed on "
+            for(i in Object.entries(counts)){
+                let [side, amount] = Object.entries(counts)[i]
+                if(i!=Object.entries(counts).length-1){
+                    newstr+=`${side} ${amount} time${cpl(amount)}, <br>`
+                } else{
+                    newstr+=`and ${side} ${amount} time${cpl(amount)}.`
+                }
+            }
+            document.getElementById("coindirection").innerHTML = newstr
         }
     }
     //i am so sorry for this code i promise i would never do this if i was working with someone else. please hire me future employers thank you
 }
 
+let csides = 3;
 function updatechances(){
-    let csides = document.getElementById("csides").value
+    csides = document.getElementById("csides").value
     document.getElementById("csides").value=csides.replace(/\D/g, '')
     csides = document.getElementById("csides").value
     document.getElementById("csides").value=Math.max(Math.min(csides,10),1) // traps number between 1 and 10
@@ -124,7 +177,7 @@ function updatechance(chance,type){ //0 is name, 1 is weight
     } else{
         sideweights[chance]=Number(document.getElementById("weight"+chance).value)
     }
-    update()
+    // update()
 }
 
 let randnum = Math.random() //global variable plz
@@ -147,6 +200,10 @@ function realisticFlip(){
             tailCount++
         }
     }
+    if(graphOn){
+        chart.data.datasets[0].data.push([flips,headCount/flips*100])
+        chart.data.datasets[1].data.push([flips,tailCount/flips*100])
+    }
 }
 // sources for both comments in this function are in the wikipedia page https://en.wikipedia.org/wiki/Coin_flipping
 
@@ -158,9 +215,26 @@ function idealFlip(){
         recentFlips.push('Tails')
         tailCount++
     }
+    if(graphOn){
+        chart.data.datasets[0].data.push([flips,headCount/flips*100])
+        chart.data.datasets[1].data.push([flips,tailCount/flips*100])
+    }
 }
 
 function customFlip(){
+    if(graphOn){
+        graphOn = !graphOn
+        document.getElementById("graphdiv").classList.toggle("graph")
+    }
+    let startnum = Math.ceil(Math.random()*totalweight)
+    for(n=0;n<csides;n++){
+        startnum-=sideweights[n]
+        if(startnum<=0){
+            recentFlips.push(customsides[n])
+            return;
+        }
+    }
+    //tomorrow maybe add the counts?
 }
 
 function numToOrdinal(num){
@@ -175,6 +249,11 @@ function numToOrdinal(num){
         return num+'rd'
     }
     return num+'th'
+}
+
+function togglegraph(){
+    graphOn = !graphOn
+    document.getElementById("graphdiv").classList.toggle("graph")
 }
 
 function togglemenu(){
